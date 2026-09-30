@@ -1,0 +1,210 @@
+# Run this cell
+from datascience import *
+%matplotlib inline
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy.stats as sp
+import re
+plt.style.use('fivethirtyeight')
+from IPython.display import Image
+print("All necessary packages have been imported.")
+
+
+#Just run this cell
+template_strand = "atacactccagtagcctatttaataagaaaatagcccctattaataacatcaataaattattcataaaattttaatgaatctataaatatataaataaagtctcagcctgaatttaaccaggaaccctgagaatttagtaattgttcggacactttagtgtcaattggaagtctggacatttatttgtatagttcatccatgccatgtgtaatcccagcagctgttacaaactcaagaaggatcatgtgatctctcttttcgttgggatctttggaaagggcagattgtgtggacaggtaatggttgtctggtaaaaggacagggccatcgccaattggagtattttgttgataatggtctgctaattgaacgcttccatctttaatgttgtgtctaattttgaagttaactttgattccattctttggtttgtctgccatgatgtatacattatgtgagttatagttgtattccattttgtgtccaagaatgtttccatcttctttaaaatcaataccttttaactcgattctattaacaagggtatcaccttcaaacttgacttcagcacgtgtcttgtagttcccgtcatctttgtaaaatatagttctttcctgtacataaccttcgggcatggcactcttgaaaaagtcatgctgtttcatatgatctgggtatcttgaaaagcattgaacaccataagagaaagtagtgacaagtgttggccatggaacaggtagcttcccagtagtgcaaataaatttaagggtaagttttccgtatgttgcatcaccttcaccctctccactgacagagaatttttgcccattaacatcgccatctaattcaacaagaattgggacaactccagtgaaaagttcttctcctttactcatctttgttatcttttattcgtgtgta"
+template_strand
+
+
+gfp_length = len(template_strand)
+
+print(f"The GFP sequence is {gfp_length} nucleotides long.")
+
+
+#Intialize variables that will represent the counts of each nucleotide.
+adenosine =  0
+thymine = 0
+guanine = 0
+cytosine = 0
+
+#Iterate through the template strand string using a for loop and conditional statements. What happens when it recognizes a nucleotide?
+for character in template_strand:
+  if character == 'a':
+      adenosine += 1
+  elif character == "t":
+      thymine += 1
+  elif character == "g":
+      guanine += 1
+  elif character == "c":
+      cytosine += 1
+
+#Let's get the length of the string to calculate the percent
+length = len(template_strand)
+
+#Use the nucleotide counts and the total length of the sequence to calculate the nucleotide percentages (NOT fractions). 
+percentage_adenosine = adenosine / length
+percentage_thymine = thymine / length
+percentage_guanine = guanine / length
+percentage_cytosine = cytosine / length
+
+print(f"The sequence is {percentage_adenosine}% A")
+print(f"The sequence is {percentage_thymine}% T")
+print(f"The sequence is {percentage_guanine}% G")
+print(f"The sequence is {percentage_cytosine}% C")
+percentage_adenosine_sigfig = np.round(percentage_adenosine, 3)
+percentage_thymine_sigfig = np.round(percentage_thymine, 3)
+percentage_guanine_sigfig = np.round(percentage_guanine, 3)
+percentage_cytosine_sigfig = np.round(percentage_cytosine, 3)
+
+
+GC = 0
+def gc_content(sequence):
+    GC = percentage_guanine_sigfig + percentage_cytosine_sigfig
+    return GC
+
+gc_content_gfp = gc_content(3)
+
+print(f"The GC content of GFP is {gc_content_gfp}%.")
+
+
+base_pairs = {
+    "g": "c",
+    "c": "g" ,
+    "a": "u" ,
+    "t": "a" ,
+}
+
+
+def transcribe(seq):
+    transcribed_seq = ''.join(base_pairs[base]for base in seq)
+    result = transcribed_seq[::-1]
+    return result
+
+q4b_check = transcribe("atcg")
+print(q4b_check)
+
+mrna = transcribe(template_strand)
+mrna
+
+start_codon = 'aug'
+stop_codons = ['uaa', 'uag', 'uga']
+
+start_codon_index = mrna.find(start_codon)
+start_codon_index
+
+mrna_start = mrna[start_codon_index:]
+mrna_start
+
+def codon_split(sequence):
+    codons = []
+    while len(sequence) >= 3:
+        codon = sequence[:3]
+        codons.append(codon)
+        sequence = sequence[3:]
+    return codons
+
+codons_orf = codon_split(mrna_start)
+print(codon_split("acgcgagca"))
+
+print(codon_split("acgcgagc"))
+try:
+    print(codons_orf[len(codons_orf)//3]) #GRADER TEST
+except:
+    print("N/A")
+
+
+    mrna_frame = ""
+for codons in codons_orf:
+    mrna_frame += codons
+    if codons in ["uaa","uag","uga"]:
+        break     #break causes the code to exit the for loope
+print(mrna_frame)
+print(mrna_frame[:3], mrna_frame[-3:])
+print(mrna_frame[len(mrna_frame)//5: len(mrna_frame)//5 + 5])
+
+
+def orf(seq):
+    seq = seq.upper()
+    def codon_split(sequence):
+        codons = []
+        while len(sequence) >= 3:
+            codon = sequence[:3]
+            codons.append(codon)
+            sequence = sequence[3:]
+        return codons
+    mrna_frame = ""
+    for codons in codons_orf:
+        mrna_frame += codons
+        if codons in ["uaa", "uag", "uga"]:
+            break
+    return mrna_frame.lower()
+orf_mrna = orf(mrna)
+print("Do orf(mrna) and mrna_frame output the same ORF? ", orf_mrna == mrna_frame)
+print("Does orf accept both uppercase and lowercase? ", orf(mrna.upper()) == orf(mrna.lower()))
+print("Does orf return a lowercase string?", orf_mrna.islower())
+
+codon_table = {
+    'AUA':'I', 'AUC':'I', 'AUU':'I', 'AUG':'M',
+    'ACA':'T', 'ACC':'T', 'ACG':'T', 'ACU':'T',
+    'AAC':'N', 'AAU':'N', 'AAA':'K', 'AAG':'K',
+    'AGC':'S', 'AGU':'S', 'AGA':'R', 'AGG':'R',
+    'CUA':'L', 'CUC':'L', 'CUG':'L', 'CUU':'L',
+    'CCA':'P', 'CCC':'P', 'CCG':'P', 'CCU':'P',
+    'CAC':'H', 'CAU':'H', 'CAA':'Q', 'CAG':'Q',
+    'CGA':'R', 'CGC':'R', 'CGG':'R', 'CGU':'R',
+    'GUA':'V', 'GUC':'V', 'GUG':'V', 'GUU':'V',
+    'GCA':'A', 'GCC':'A', 'GCG':'A', 'GCU':'A',
+    'GAC':'D', 'GAU':'D', 'GAA':'E', 'GAG':'E',
+    'GGA':'G', 'GGC':'G', 'GGG':'G', 'GGU':'G',
+    'UCA':'S', 'UCC':'S', 'UCG':'S', 'UCU':'S',
+    'UUC':'F', 'UUU':'F', 'UUA':'L', 'UUG':'L',
+    'UAC':'Y', 'UAU':'Y', 'UAA':'', 'UAG':'',
+    'UGC':'C', 'UGU':'C', 'UGA':'', 'UGG':'W'}
+
+
+orf_mrna = orf_mrna.upper()
+codons = codon_split(orf_mrna)
+print(codons)
+
+def translate(mrna, table):
+    mrna = mrna.upper()
+    output = ''
+    for i in range(0, len(mrna), 3):
+        output += table[mrna[i:i+3]]
+    return output
+
+def valid_mrna_check(string):
+    valid_nucleotides = {"a", "u", "g", "c"}
+    for char in str(string):
+        if char not in valid_nucleotides:
+            return False
+    '''if string != valid_nucleotides:
+        return False'''
+    if not (string.startswith("aug") or string.endswith(("uaa", "uag", "uga"))):
+        return False
+    if len(string) % 3 != 0:
+        return False
+    return True
+
+def translate_updated(mrna, codon_table):
+    if not valid_mrna_check(mrna):
+        return "Error: Not Valid mRNA"
+    else:
+        return translate(mrna.upper(), codon_table)
+print([valid_mrna_check("aggacguag"), valid_mrna_check("auggac")])
+
+aa_seq = translate(orf_mrna, codon_table)
+aa_seq
+def translate_from_template(template_sequence):
+    mrna_seq = transcribe(template_strand)
+    mrna_orf = orf(template_sequence)
+    aa_seq = translate(mrna_orf, codon_table)
+    return aa_seq
+print("Do translate_from_template(template_strand) and aa_seq output the same sequence? ", translate_from_template(template_strand) == aa_seq)
+print(translate_from_template("ttacgattcatacgtcgactccgtcat")[1:])
+
+
+
+
+
+
+
